@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Task Tracker</title>
+</head>
+<body>
+    <div class="flex justify-center items-center h-screen">
+        <div class="border-solid rounded-md flex flex-col space-y-2 w-2/3 bg-blue-200 p-4 h-2/3">
+            <label>Task Tracker</label>
+            <input type="text" id="input" placeholder="Start writing and press enter to create task" class="w-full rounded-md p-2">
+            <ul id="list" class="space-y-2">
+                <!-- This part will be dynamically created later -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let input = document.getElementById('input');
+        let list = document.getElementById('list');
+
+        // Load tasks from localStorage when the page is loaded
+        document.addEventListener("DOMContentLoaded", () => {
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || []; // Get tasks or an empty array
+            tasks.forEach(task => {
+                createTaskElement(task.text, task.checked); // Create each task element from localStorage data
+            });
+        });
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                let taskText = input.value;
+                if (!taskText) return; // Prevent adding empty tasks
+
+                // Save the new task in the localStorage
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                let task = { text: taskText, checked: false };
+                tasks.push(task);
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+
+                createTaskElement(taskText, task.checked); // Create the task in the UI
+
+                // Clear the input after a short delay
+                setTimeout(() => {
+                    input.value = '';
+                }, 1000);
+            }
+        });
+
+        // Function to create a task element
+        function createTaskElement(text, checked) {
+            let span = document.createElement('span');
+            span.classList.add('flex', 'justify-between', 'space-x-4', 'items-center', 'bg-gray-400', 'p-2', 'rounded-md');
+
+            // Create the checkbox input element
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = checked;
+
+            // Create the list item (li) element
+            const li = document.createElement('li');
+            li.textContent = text;
+            if (checked) {
+                li.classList.add('line-through'); // Apply strike-through if checked
+            }
+
+            // Create the img element (delete icon)
+            const img = document.createElement('img');
+            img.src = 'https://img.icons8.com/?size=100&id=67884&format=png&color=000000';
+            img.alt = 'delete icon';
+            img.classList.add('w-6', 'cursor-pointer');
+            
+            // Append the created elements to the span
+            span.appendChild(checkbox);
+            span.appendChild(li);
+            span.appendChild(img);
+
+            // Append the span to the list
+            list.appendChild(span);
+
+            // Event listener to remove the task when the delete icon is clicked
+            img.addEventListener('click', () => {
+                list.removeChild(span); // Remove the specific task (span) from the list
+                
+                // Remove from localStorage
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks = tasks.filter(task => task.text !== text); // Remove the deleted task from the array
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            });
+
+            // Event listener to toggle line-through when the checkbox is checked/unchecked
+            checkbox.addEventListener('change', () => {
+                if (checkbox.checked) {
+                    li.classList.add('line-through'); // Strike-through when checked
+                } else {
+                    li.classList.remove('line-through'); // Remove strike-through when unchecked
+                }
+
+                // Update localStorage to reflect the checkbox state
+                let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+                tasks = tasks.map(task => {
+                    if (task.text === text) {
+                        task.checked = checkbox.checked; // Update the checked state
+                    }
+                    return task;
+                });
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            });
+        }
+    </script>
+</body>
+</html>
